@@ -21,7 +21,3 @@ imwrite(img1_filter+0.5, 'results/high_pass.jpg', 'quality', 95);
 imwrite(img2_filter, 'results/low_pass.jpg', 'quality', 95);
 imwrite(hybrid_image, 'results/hybrid_image.jpg', 'quality', 95);
 imwrite(results_img, 'results/hybrid_image_pyramid.jpg', 'quality', 95);
-%imwrite(img1_filter+0.5, 'results/high_pass.jpg');
-%imwrite(img2_filter, 'results/low_pass.jpg');
-%imwrite(hybrid_image, 'results/hybrid_image.jpg');
-%imwrite(results_img, 'results/hybrid_image_pyramid.jpg');
