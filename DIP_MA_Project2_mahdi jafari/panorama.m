@@ -1,36 +1,51 @@
-% Read the images
-image1 = imread('image1.jpg');
-image2 = imread('image2.jpg');
+% Clear workspace and close all figures
+clear;
+close all;
 
-% Convert to grayscale
-grayImage1 = rgb2gray(image1);
-grayImage2 = rgb2gray(image2);
+% Load images
+imageFiles = {'image1.jpg', 'image2.jpg', 'image3.jpg', 'image4.jpg', ...
+              'image5.jpg', 'image6.jpg', 'image7.jpg', 'image8.jpg'};
+numImages = length(imageFiles);
+images = cell(1, numImages);
 
-% Step 1: Detect Features
-points1 = detectSURFFeatures(grayImage1);
-points2 = detectSURFFeatures(grayImage2);
+for i = 1:numImages
+    images{i} = imread(imageFiles{i});
+end
 
-% Extract features
-[features1, validPoints1] = extractFeatures(grayImage1, points1);
-[features2, validPoints2] = extractFeatures(grayImage2, points2);
+% Initialize the panorama with the first image
+panorama = images{1};
 
-% Step 2: Match Features
-indexPairs = matchFeatures(features1, features2);
-matchedPoints1 = validPoints1(indexPairs(:, 1), :);
-matchedPoints2 = validPoints2(indexPairs(:, 2), :);
+for i = 2:numImages
+    % Convert current panorama and the next image to grayscale
+    grayPanorama = rgb2gray(panorama);
+    grayNextImage = rgb2gray(images{i});
+    
+    % Step 1: Detect Features
+    points1 = detectSURFFeatures(grayPanorama);
+    points2 = detectSURFFeatures(grayNextImage);
+    
+    % Extract features
+    [features1, validPoints1] = extractFeatures(grayPanorama, points1);
+    [features2, validPoints2] = extractFeatures(grayNextImage, points2);
+    
+    % Step 2: Match Features
+    indexPairs = matchFeatures(features1, features2);
+    matchedPoints1 = validPoints1(indexPairs(:, 1), :);
+    matchedPoints2 = validPoints2(indexPairs(:, 2), :);
+    
+    % Step 3: Compute Homography using RANSAC
+    [tform, inlierPoints1, inlierPoints2] = estimateGeometricTransform(matchedPoints2, matchedPoints1, 'projective');
+    
+    % Step 4: Combine the Images
+    % Warp the current image to the panorama
+    outputView = imref2d(size(panorama));
+    warpedImage = imwarp(images{i}, tform, 'OutputView', outputView);
+    
+    % Blend the warped image with the current panorama
+    panorama = max(panorama, warpedImage);
+end
 
-% Step 3: Compute Homography using RANSAC
-[tform, inlierPoints1, inlierPoints2] = estimateGeometricTransform(matchedPoints1, matchedPoints2, 'projective');
-
-% Step 4: Combine the Images
-% Warp image2 to image1
-outputView = imref2d(size(grayImage1));
-warpedImage2 = imwarp(image2, tform, 'OutputView', outputView);
-
-% Create a mask to blend the images
-blendedImage = max(warpedImage2, image1);
-
-% Display the result
+% Display the final panorama
 figure;
-imshow(blendedImage);
+imshow(panorama);
 title('Panorama Image');
