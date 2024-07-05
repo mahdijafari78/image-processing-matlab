@@ -1,4 +1,7 @@
-buildingDir = fullfile('date');
+clc;
+clear;
+
+buildingDir = fullfile('input');
 buildingScene = imageDatastore(buildingDir);
 
 montage(buildingScene.Files)
@@ -10,6 +13,7 @@ points = detectSURFFeatures(grayImage);
 [features, points] = extractFeatures(grayImage, points);
 
 numImages = numel(buildingScene.Files);
+
 tforms(numImages) = projtform2d;
 
 imageSize = zeros(numImages, 2);
@@ -39,10 +43,8 @@ for n = 2:numImages
 
     tforms(n) = estgeotform2d(matchedPoints, matchedPointsPrev, 'projective', 'Confidence', 99.9, 'MaxNumTrials', 2000);
 
-    % Compute T(1) * T(2) * ... * T(n-1) * T(n).
     tforms(n).A = tforms(n-1).A * tforms(n).A;
 
-    % Check condition number of transformation matrix
     condNumber = cond(tforms(n).A);
     disp(['Condition number of transformation matrix for image ' num2str(n) ': ' num2str(condNumber)]);
 end
@@ -95,3 +97,4 @@ end
 
 figure;
 imshow(panorama);
+
